@@ -1,4 +1,5 @@
 import 'package:blog_app/core/theme/app_pallete.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -12,6 +13,10 @@ class AppTheme {
   static final darkThemeMode = ThemeData.dark().copyWith(
     appBarTheme: const AppBarTheme(backgroundColor: AppPallete.backgroundColor),
     scaffoldBackgroundColor: AppPallete.backgroundColor,
+    chipTheme: const ChipThemeData(
+      color: MaterialStatePropertyAll(AppPallete.backgroundColor),
+      side: BorderSide.none,
+    ),
     inputDecorationTheme:  InputDecorationTheme(
       contentPadding: const EdgeInsets.all(27),
       focusedBorder: _border(AppPallete.gradient2),
