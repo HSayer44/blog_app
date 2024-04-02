@@ -1,6 +1,10 @@
 import 'package:blog_app/core/error/exceptions.dart';
 import 'package:blog_app/features/auth/data/models/user_model.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../core/error/failures.dart';
 
 abstract interface class AuthRemoteDataSource {
   Session? get currentUserSession;
@@ -38,6 +42,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw ServerException('User is null!');
       }
       return UserModel.fromJson(response.user!.toJson()).copyWith(email: response.user!.email);
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
     } catch (e) {
       throw ServerException(e.toString());
     }
@@ -57,6 +63,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw ServerException('User is null!');
       }
       return UserModel.fromJson(response.user!.toJson()).copyWith(email: response.user!.email);
+    }on AuthException catch (e) {
+      throw ServerException(e.message);
     } catch (e) {
       throw ServerException(e.toString());
     }
