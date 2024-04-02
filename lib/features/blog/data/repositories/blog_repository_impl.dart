@@ -9,10 +9,15 @@ import 'package:blog_app/features/blog/domain/repositories/blog_repository.dart'
 import 'package:fpdart/fpdart.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/network/connection_checker.dart';
+import '../datasources/blog_local_data_source.dart';
+
 class BlogRepositoryImpl implements BlogRepository {
   final BlogRemotDataSource blogRemotDataSource;
+  final BlogLocalDataSource blogLocalDataSource;
+  final ConnectionChecker connectionChecker;
 
-  BlogRepositoryImpl(this.blogRemotDataSource);
+  BlogRepositoryImpl(this.blogRemotDataSource, this.blogLocalDataSource, this.connectionChecker);
 
   @override
   Future<Either<Failure, Blog>> uploadBlog({
@@ -23,6 +28,9 @@ class BlogRepositoryImpl implements BlogRepository {
     required List<String> topics,
   }) async {
     try {
+      if (!await (connectionChecker.isConnected)) {
+        return left(Failure('No Internet Connection!'));
+      }
       BlogModel blogModel = BlogModel(
         id: const Uuid().v1(),
         posterId: posterId,
@@ -35,11 +43,9 @@ class BlogRepositoryImpl implements BlogRepository {
 
       final imageUrl = await blogRemotDataSource.uploadBlogImage(image: image, blog: blogModel);
       blogModel = blogModel.copyWith(imageUrl: imageUrl);
-      
+
       final uploadedBlog = await blogRemotDataSource.uploadBlog(blogModel);
       return right(uploadedBlog);
-      
-      
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -48,9 +54,13 @@ class BlogRepositoryImpl implements BlogRepository {
   @override
   Future<Either<Failure, List<Blog>>> getAllBlogs() async {
     try {
-    final blogs = await blogRemotDataSource.getAllBlogs();
-    return right(blogs);
-
+      if (!await (connectionChecker.isConnected)) {
+        final localBlogs = blogLocalDataSource.loadBlogs();
+        return right(localBlogs);
+      }
+      final blogs = await blogRemotDataSource.getAllBlogs();
+      blogLocalDataSource.uploadLocalBlogs(blogs: blogs);
+      return right(blogs);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
